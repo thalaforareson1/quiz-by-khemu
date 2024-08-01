@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nischal Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .hidden {
+            display: none;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .question-container {
+            margin: 20px 0;
+        }
+        .feedback {
+            font-size: 1.5em;
+            margin: 10px 0;
+        }
+        .correct {
+            color: green;
+            animation: blink 1s linear;
+        }
+        .incorrect {
+            color: red;
+            animation: blink 1s linear;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .score, .timer {
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .leaderboard {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="startScreen">
+            <h1>Nischal Quiz</h1>
+            <p>Enter your name to start:</p>
+            <input type="text" id="playerName" placeholder="Your Name">
+            <button onclick="startQuiz()">Start Quiz</button>
+        </div>
+
+        <div id="quizScreen" class="hidden">
+            <h2 id="question"></h2>
+            <div id="options"></div>
+            <div class="score">Score: <span id="score">0</span></div>
+            <div class="timer">Time Left: <span id="timer">60</span> seconds</div>
+            <button onclick="nextQuestion()">Next</button>
+        </div>
+
+        <div id="endScreen" class="hidden">
+            <h2>Quiz Over!</h2>
+            <p>Your final score is: <span id="finalScore">0</span></p>
+            <button onclick="restartQuiz()">Restart Quiz</button>
+            <div class="leaderboard">
+                <h3>Leaderboard</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            // Football Questions
+            { question: 'Who won the FIFA World Cup in 2018?', options: ['France', 'Croatia', 'Argentina', 'Germany'], answer: 'France' },
+            { question: 'Which player holds the record for the most goals in a single Premier League season?', options: ['Alan Shearer', 'Mohamed Salah', 'Cristiano Ronaldo', 'Thierry Henry'], answer: 'Mohamed Salah' },
+            { question: 'Which club has won the most UEFA Champions League titles?', options: ['FC Barcelona', 'AC Milan', 'Real Madrid', 'Liverpool'], answer: 'Real Madrid' },
+            { question: 'Who is the all-time top scorer for the Brazilian national team?', options: ['Ronaldo', 'Pele', 'Romario', 'Zico'], answer: 'Pele' },
+            { question: 'Which country hosted the 2022 FIFA World Cup?', options: ['Qatar', 'Russia', 'Brazil', 'South Africa'], answer: 'Qatar' },
+            { question: 'Who won the Golden Boot in the 2014 World Cup?', options: ['Lionel Messi', 'James Rodríguez', 'Neymar', 'Thomas Müller'], answer: 'James Rodríguez' },
+            { question: 'Which football club is known as the "Red Devils"?', options: ['Liverpool', 'Arsenal', 'Manchester United', 'Chelsea'], answer: 'Manchester United' },
+            { question: 'Who was the manager of Chelsea during their 2012 UEFA Champions League victory?', options: ['Carlo Ancelotti', 'José Mourinho', 'Roberto Di Matteo', 'Guus Hiddink'], answer: 'Roberto Di Matteo' },
+            { question: 'Which player is known as "The Egyptian King"?', options: ['Mohamed Salah', 'Ahmed Hegazi', 'Mahmoud Hassan Trezeguet', 'Amr Zaki'], answer: 'Mohamed Salah' },
+            { question: 'Which country won the first-ever FIFA World Cup in 1930?', options: ['Brazil', 'Argentina', 'Uruguay', 'Italy'], answer: 'Uruguay' },
+            { question: 'Which club did Zinedine Zidane manage to win the UEFA Champions League three times consecutively?', options: ['Juventus', 'Paris Saint-Germain', 'Real Madrid', 'AC Milan'], answer: 'Real Madrid' },
+            { question: 'What is the nickname of the Italian national football team?', options: ['The Lions', 'The Azzurri', 'The Canaries', 'The Red Dragons'], answer: 'The Azzurri' },
+            { question: 'Which player holds the record for the most appearances in the Premier League?', options: ['Ryan Giggs', 'Frank Lampard', 'Steven Gerrard', 'Gareth Barry'], answer: 'Gareth Barry' },
+            { question: 'Who is known for the "Hand of God" goal?', options: ['Diego Maradona', 'Lionel Messi', 'Cristiano Ronaldo', 'Pelé'], answer: 'Diego Maradona' },
+            { question: 'Which team won the UEFA Euro 2020?', options: ['England', 'Spain', 'Italy', 'France'], answer: 'Italy' },
+            { question: 'Who is the most capped player in the history of the German national team?', options: ['Lothar Matthäus', 'Miroslav Klose', 'Philipp Lahm', 'Bastian Schweinsteiger'], answer: 'Lothar Matthäus' },
+            { question: 'Which stadium is known as "The Theatre of Dreams"?', options: ['Anfield', 'Old Trafford', 'Stamford Bridge', 'Camp Nou'], answer: 'Old Trafford' },
+            { question: 'Which national team did Brazil defeat to win the 2002 World Cup?', options: ['Germany', 'Argentina', 'France', 'Italy'], answer: 'Germany' },
+            { question: 'Which club is nicknamed "The Toffees"?', options: ['Everton', 'Arsenal', 'Tottenham Hotspur', 'West Ham United'], answer: 'Everton' },
+            { question: 'Who scored the fastest goal in World Cup history?', options: ['Cristiano Ronaldo', 'Hakan Sükür', 'Paolo Maldini', 'Mohamed Salah'], answer: 'Paolo Maldini' },
+
+            // Cricket Questions
+            { question: 'Which country won the 2019 Cricket World Cup?', options: ['Australia', 'England', 'India', 'New Zealand'], answer: 'England' },
+            { question: 'Who holds the record for the most runs in a single One Day International (ODI) inning?', options: ['Virat Kohli', 'Chris Gayle', 'Sachin Tendulkar', 'Ricky Ponting'], answer: 'Chris Gayle' },
+            { question: 'Which bowler has the most wickets in Test cricket history?', options: ['Shane Warne', 'Muttiah Muralitharan', 'Anil Kumble', 'James Anderson'], answer: 'Muttiah Muralitharan' },
+            { question: 'What is the maximum number of overs a bowler can bowl in an ODI match?', options: ['10', '12', '15', '20'], answer: '10' },
+            { question: 'Which cricketer is known as "The Little Master"?', options: ['Sunil Gavaskar', 'Sachin Tendulkar', 'Rahul Dravid', 'Sourav Ganguly'], answer: 'Sunil Gavaskar' },
+            { question: 'Which country is the birthplace of cricket?', options: ['Australia', 'South Africa', 'England', 'India'], answer: 'England' },
+            { question: 'Who was the captain of the Indian team that won the 2007 T20 World Cup?', options: ['Rahul Dravid', 'Sourav Ganguly', 'MS Dhoni', 'Virat Kohli'], answer: 'MS Dhoni' },
+            { question: 'Which bowler is famous for his "doosra" delivery?', options: ['Shane Warne', 'Muttiah Muralitharan', 'Saeed Ajmal', 'Ravichandran Ashwin'], answer: 'Saeed Ajmal' },
+            { question: 'Who scored the first double century in a T20 International match?', options: ['Chris Gayle', 'Virat Kohli', 'AB de Villiers', 'David Warner'], answer: 'Chris Gayle' },
+            { question: 'Which team has won the most number of ICC T20 World Cups?', options: ['India', 'Pakistan', 'Australia', 'West Indies'], answer: 'West Indies' },
+            { question: 'Who holds the record for the most sixes in international cricket?', options: ['MS Dhoni', 'Chris Gayle', 'Adam Gilchrist', 'AB de Villiers'], answer: 'Chris Gayle' },
+            { question: 'Which player holds the record for the most centuries in One Day Internationals?', options: ['Ricky Ponting', 'Sachin Tendulkar', 'Virat Kohli', 'Brian Lara'], answer: 'Virat Kohli' },
+            { question: 'In which year did the first Test match take place?', options: ['1877', '1885', '1890', '1900'], answer: '1877' },
+            { question: 'Which cricketer is known as "The King of T20"?', options: ['Virat Kohli', 'AB de Villiers', 'Chris Gayle', 'MS Dhoni'], answer: 'Chris Gayle' },
+            { question: 'Which country won the 2015 Cricket World Cup?', options: ['India', 'Australia', 'New Zealand', 'South Africa'], answer: 'Australia' },
+            { question: 'Which player is known for the most Test runs?', options: ['Ricky Ponting', 'Sachin Tendulkar', 'Steve Waugh', 'Brian Lara'], answer: 'Sachin Tendulkar' },
+            { question: 'Who holds the record for the most wickets in an ODI match?', options: ['Muttiah Muralitharan', 'Shahid Afridi', 'Ajit Agarkar', 'Lasith Malinga'], answer: 'Ajit Agarkar' },
+            { question: 'Which team won the inaugural ICC Women\'s T20 World Cup in 2009?', options: ['Australia', 'England', 'New Zealand', 'India'], answer: 'England' },
+            { question: 'Who was the captain of the Australian cricket team during their 1999 World Cup win?', options: ['Steve Waugh', 'Allan Border', 'Ricky Ponting', 'Michael Clarke'], answer: 'Steve Waugh' },
+            { question: 'Which cricketer was known for the "Bouncer" delivery?', options: ['Dennis Lillee', 'Shane Warne', 'Wasim Akram', 'Shoaib Akhtar'], answer: 'Shoaib Akhtar' },
+            { question: 'Which cricketer scored the fastest century in ODIs?', options: ['AB de Villiers', 'Virat Kohli', 'Chris Gayle', 'Shahid Afridi'], answer: 'AB de Villiers' },
+            { question: 'Who is the highest wicket-taker in T20 Internationals?', options: ['Shahid Afridi', 'Lasith Malinga', 'Sunil Narine', 'Ravichandran Ashwin'], answer: 'Lasith Malinga' },
+            { question: 'Which country has won the most number of ICC Champions Trophy tournaments?', options: ['Australia', 'India', 'England', 'South Africa'], answer: 'India' },
+            { question: 'Which cricketer was known as "The Prince of Trinidad"?', options: ['Brian Lara', 'Viv Richards', 'Clive Lloyd', 'Carl Hooper'], answer: 'Brian Lara' },
+            { question: 'Who is the only player to have scored 10,000 runs in both ODI and Test cricket?', options: ['Ricky Ponting', 'Sachin Tendulkar', 'Virat Kohli', 'Rahul Dravid'], answer: 'Sachin Tendulkar' },
+            { question: 'Which team won the ICC Under-19 Cricket World Cup in 2018?', options: ['India', 'Australia', 'Pakistan', 'England'], answer: 'India' },
+            { question: 'Who is the highest run-scorer in the history of T20 Internationals?', options: ['Virat Kohli', 'Chris Gayle', 'AB de Villiers', 'MS Dhoni'], answer: 'Chris Gayle' },
+            { question: 'Who is known for the "Helicopter Shot" in cricket?', options: ['Sachin Tendulkar', 'Virat Kohli', 'MS Dhoni', 'Yuvraj Singh'], answer: 'MS Dhoni' },
+            { question: 'Which team won the ICC Women\'s Cricket World Cup in 2022?', options: ['England', 'Australia', 'India', 'New Zealand'], answer: 'Australia' },
+            { question: 'Which player holds the record for the most runs in a single T20 International innings?', options: ['Chris Gayle', 'AB de Villiers', 'Virat Kohli', 'Evin Lewis'], answer: 'Chris Gayle' }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let playerName = '';
+        let timer;
+        let leaderboard = [];
+
+        function startQuiz() {
+            playerName = document.getElementById('playerName').value;
+            if (playerName.trim() === '') {
+                alert('Please enter your name.');
+                return;
+            }
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            document.getElementById('endScreen').classList.add('hidden');
+            document.getElementById('score').textContent = score;
+            startTimer();
+            loadQuestion();
+        }
+
+        function startTimer() {
+            let timeLeft = 60;
+            document.getElementById('timer').textContent = timeLeft;
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    endQuiz();
+                }
+            }, 1000);
+        }
+
+        function loadQuestion() {
+            const shuffledQuestions = shuffleArray(questions);
+            const currentQuestion = shuffledQuestions[currentQuestionIndex];
+            document.getElementById('question').textContent = currentQuestion.question;
+            const optionsHtml = currentQuestion.options.map((option, index) =>
+                `<button onclick="checkAnswer('${option}')">${option}</button>`
+            ).join('');
+            document.getElementById('options').innerHTML = optionsHtml;
+        }
+
+        function checkAnswer(answer) {
+            const correctAnswer = questions[currentQuestionIndex].answer;
+            if (answer === correctAnswer) {
+                document.querySelector('#options button').classList.add('correct');
+                score += 5;
+            } else {
+                document.querySelector('#options button').classList.add('incorrect');
+                score -= 1;
+            }
+            document.getElementById('score').textContent = score;
+            setTimeout(nextQuestion, 1000);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex >= questions.length) {
+                endQuiz();
+            } else {
+                loadQuestion();
+            }
+        }
+
+        function endQuiz() {
+            clearInterval(timer);
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('endScreen').classList.remove('hidden');
+            document.getElementById('finalScore').textContent = score;
+            updateLeaderboard();
+        }
+
+        function updateLeaderboard() {
+            leaderboard.push({ name: playerName, score: score });
+            leaderboard.sort((a, b) => b.score - a.score);
+            const leaderboardBody = document.getElementById('leaderboardBody');
+            leaderboardBody.innerHTML = leaderboard.map(player =>
+                `<tr><td>${player.name}</td><td>${player.score}</td></tr>`
+            ).join('');
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            document.getElementById('playerName').value = '';
+            document.getElementById('startScreen').classList.remove('hidden');
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('endScreen').classList.add('hidden');
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+    </script>
+</body>
+</html>
